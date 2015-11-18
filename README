@@ -1,0 +1,15 @@
+tokenizer.py - Auteur: Luc Giffon
+
+Utilisation:
+  python3 tokenize.py <lexique path> <corpus path> [-flag]
+
+  Attention: sys.argv est utilisé pour parser les arguments. Les arguments doivent être dans le bon ordre. De plus,
+  les options prennant un argument doivent être utilisées avec le symbole "=" et sans espace.
+
+Options:
+  -h                    Affiche ce message d'aide
+  -dtree                Affiche l'arbre lexicographique
+  -dcorpus              Affiche les mots du corpus
+
+  --dumptree=<path>     Ecris l'arbre lexicographique
+  --dumpcorpus=<path>   Ecris les codes des mots du corpus

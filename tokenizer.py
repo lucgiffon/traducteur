@@ -1,3 +1,5 @@
+#!/usr/bin/python3
+
 import sys
 # import tree
 
@@ -171,6 +173,7 @@ Options:
   -dcorpus              Affiche les mots du corpus
 
   --dumptree=<path>     Ecris l'arbre lexicographique
+  --dumpcorpus=<path>   Ecris les codes des mots du corpus
 """
 	possible_flags = ["-h", "-dtree", "-dcorpus"]
 	possible_options = ["--dumptree", "--dumpcorpus"]
