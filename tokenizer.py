@@ -73,7 +73,7 @@ def open_corpus(path):
 	except:
 		exit("Le fichier " + path + " n'existe pas!")
 
-def analyse_corpus(corpus, tree):
+def analyse_corpus(corpus, tree, flags):
 	"""
 	Récupère les mots du corpus.
 	"""
@@ -132,7 +132,10 @@ def analyse_corpus(corpus, tree):
 
 		elif char in separators:
 				if previous_char not in separators:
-					words_from_corpus.append(last_word)
+					if "-i" in flags and last_word == 0:
+						pass
+					else:
+						words_from_corpus.append(last_word)
 				index_char += 1
 				#~ print("separateur = " + char)
 				index_last_word = 0 # a modifier?
@@ -144,7 +147,8 @@ def analyse_corpus(corpus, tree):
 				index_char += 1
 				#~ print(corpus[index_char], end="")
 			#~ print("")
-			words_from_corpus.append(0)
+			if "-i" not in flags:
+				words_from_corpus.append(0)
 			subtree = tree
 			index_char += 1
 	return words_from_corpus
@@ -154,6 +158,7 @@ def displayWordsOfCorpus(words_from_corpus, codeToMot):
 		try:
 			print(str(word) + " -> " + codeToMot[word])
 		except:
+			print(word)
 			continue
 
 
@@ -171,11 +176,12 @@ Options:
   -h                    Affiche ce message d'aide
   -dtree                Affiche l'arbre lexicographique
   -dcorpus              Affiche les mots du corpus
+  -i                    Ignore les mots inconnus
 
   --dumptree=<path>     Ecris l'arbre lexicographique
   --dumpcorpus=<path>   Ecris les codes des mots du corpus
 """
-	possible_flags = ["-h", "-dtree", "-dcorpus"]
+	possible_flags = ["-h", "-dtree", "-dcorpus", "-i"]
 	possible_options = ["--dumptree", "--dumpcorpus"]
 
 	if ("-h" in sys.argv or len(sys.argv) < 3):
@@ -212,7 +218,7 @@ Options:
 
 	print("Lecture du corpus:", end = " ")
 	corpus = open_corpus(corpusPath)
-	words_from_corpus = ["START"] + analyse_corpus(corpus, tree) + ["STOP"]
+	words_from_corpus = ["START"] + analyse_corpus(corpus, tree, flags) + ["STOP"]
 
 
 	if ("-dcorpus" in flags):
