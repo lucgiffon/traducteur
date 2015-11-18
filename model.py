@@ -47,26 +47,10 @@ def prob_digrams(counted_digrams, counted_unigrams):
 		prob_digrams[digram] = -(math.log((counted_digrams[digram] / counted_unigrams[digram[1]]), 10))
 	return prob_digrams
 
-def perplexity(sequence, probs):
-	sum_probs = 0
-	length_sequence = len(sequence)
-	i = 1
-	while i < length_sequence:
-		sum_probs += probs[(sequence[i], sequence[i-1])]
-		i += 1
-	return (sum_probs / (length_sequence + 1))
-
-def smooth_prob_digrams(d_probs_digrams, d_probs_unigrams):
-	coefficient = [0.9, 0.09, 0.01]
-	smooth_probs_digrams = {}
-	for digram in d_probs_digrams:
-		smooth_probs_digrams[digram] = (coefficient[0] * d_probs_digrams[digram] +
-										coefficient[1] * d_probs_unigrams[digram[0]] +
-										coefficient[2])
-	return smooth_probs_digrams
-
-
 def display_probs(probs):
+	"""
+	Affiche la probabilité d'un élément
+	"""
 	for prob in probs:
 		print(str(prob) + " -> " + str(probs[prob]))
 
@@ -78,10 +62,9 @@ Utilisation:
 
   Programme qui prend en entrée un texte tokenizé, traduit en code, et retourne un modèle de langage avec les probabilités (exprimées en -logprob) de chaque unigramme et chaque bigramme du texte d'entrée
 
-  python3 tokenize.py <corpus tokenizé path> [-flag]
+  python3 model.py <corpus tokenizé path> [-option]
 
-  Attention: sys.argv est utilisé pour parser les arguments. Les arguments doivent être dans le bon ordre. De plus,
-  les options prenant un argument doivent être utilisées avec le symbole "=" et sans espace.
+  Attention: sys.argv est utilisé pour parser les arguments. Les arguments doivent être dans le bon ordre. De plus, les options prenant un argument doivent être utilisées avec le symbole "=" et sans espace.
 
 Options:
   -h                    Affiche ce message d'aide
@@ -157,34 +140,3 @@ Options:
 		f = open(flags["--dumpdi"], 'w')
 		f.write(str(probs_digrams))
 		f.close()
-
-	if False:
-	# --- probabilité d'une séquence --- #
-
-		#~ print("Probabilité d'une séquence:")
-		sequence_fr = "Marie-Antoinette"
-		#~ words_from_sequence_fr = analyse_corpus(sequence_fr, tree_fr)
-		#~ print("Sequence française: " + str(words_from_sequence_fr))
-
-		#~ perplexite_fr = perplexity(words_from_sequence_fr, probs_digrams_fr)
-		#~ print("Perplexité de la séquence française: " + str(perplexite_fr))
-
-		#~ smooth_prob_digrams_fr = smooth_prob_digrams(probs_digrams_fr, probs_unigram_fr)
-		#~ smooth_perplexite_fr = perplexity(words_from_sequence_fr, smooth_prob_digrams)
-		#~ print("Smooth_perplexité de la séquence française: " + str(smooth_perplexite_fr))
-		#~ print("")
-
-
-		sequence_en = "Marie-Antoinette"
-		#~ words_nom_sequence_en = analyse_corpus(sequence_en, tree_en)
-		#~ print("Sequence Anglaise: " + str(words_enom_sequence_en))
-
-		#~ perplexite_en = perplexity(words_nom_sequence_en, probs_digrams_en)
-		#~ print("Perplexité de la séquence anglaise: " + str(perplexite_en))
-
-		#~ smooth_prob_digrams_en = smooth_prob_digrams(probs_digrams_en, probs_unigram_en)
-		#~ smooth_perplexite_en = perplexity(words_nom_sequence_en, smooth_prob_digrams)
-		#~ print("Smooth_perplexité de la séquence anglaise: " + str(smooth_perplexite_en))
-		#~ print("")
-
-		#~ print("")

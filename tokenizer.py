@@ -169,7 +169,7 @@ if __name__ == "__main__":
 Utilisation:
   Programme qui prend en entrée un texte et un lexique avec code et qui retourne le texte tokenizé selon le lexique, avec les mots remplacés par des codes.
 
-  python3 tokenize.py <lexique path> | --loadtree=<path> <corpus path> [-flag]
+  python3 tokenize.py <lexique path> | --loadtree=<path> <corpus path> | --text=<texte> [-option]
 
   Attention: sys.argv est utilisé pour parser les arguments. Les arguments doivent être dans le bon ordre. De plus, les options prenant un argument doivent être utilisées avec le symbole "=" et sans espace.
 
@@ -195,8 +195,13 @@ Options:
 	else:
 		treePath = sys.argv[1].split('=')[1]
 
+	corpus = None
+	corpusPath = None
+	if len(sys.argv[2].split('=')) == 1:
+		corpusPath = sys.argv[2]
+	else:
+		corpus = sys.argv[2].split('=')[1]
 
-	corpusPath = sys.argv[2]
 	flags = {}
 	if (len(sys.argv) > 3):
 		for flag in sys.argv[3:]:
@@ -245,7 +250,9 @@ Options:
 
 
 	print("Lecture du corpus:", end = " ")
-	corpus = open_corpus(corpusPath)
+	if corpus is None:
+		corpus = open_corpus(corpusPath)
+
 	words_from_corpus = ["START"] + analyse_corpus(corpus, tree, flags) + ["STOP"]
 
 
