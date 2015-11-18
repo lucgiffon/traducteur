@@ -1,6 +1,5 @@
 #!/usr/bin/python3
 
-import math
 import sys
 
 def calc_smooth_perplexity(sequence, probs_unigrams, probs_digrams):
@@ -50,7 +49,7 @@ Utilisation:
   python3 perplexity.py <texte tokenizé path> | --sequence=<sequence> <modèle digrammes> <modèle unigrammes> [-option]
 
   Attention: sys.argv est utilisé pour parser les arguments. Les arguments doivent être dans le bon ordre. De plus, les options prenant un argument doivent être utilisées avec le symbole "=" et sans espace.
-  Une la séquence doit être formatée comme [1,2,3] et non pas [1, 2, 3].
+  La séquence doit être formatée comme [1,2,3] et non pas [1, 2, 3].
 
 Options:
   -h                    Affiche ce message d'aide

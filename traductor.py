@@ -1,0 +1,199 @@
+#!/usr/bin/python3
+
+import sys
+import math
+
+def getTableFromFile(path):
+	"""Retourne une table de traduction
+
+	la table de traduction est un dictionnaire dont les clés sont les mots en français et les valeurs sont le couple (traduction anglaise, probabilité de la traduction)
+	"""
+	f = open(path, 'r')
+	table = {}
+	line = f.readline()
+	while line != "":
+		splittedLine = line.split()
+		if splittedLine[0] in table:
+			table[splittedLine[0]].append((splittedLine[1], -(math.log(float(splittedLine[2]), 10))))
+		else:
+			table[splittedLine[0]] = [(splittedLine[1], -(math.log(float(splittedLine[2]), 10)))]
+		line = f.readline()
+	return table
+
+def translate(words, table_fr_en, probs_unigrams_en):
+	"""
+	Traduction mot à mot
+
+	:param words:
+	:param table_fr_en:
+	:param probs_unigrams_en:
+	:return:
+	"""
+	translationList = []
+	for word in words:
+		if word in table_fr_en:
+			if word != 0:
+				translationScoreMax = float('inf')
+				for possible_translation in table_fr_en[word]:
+					try:
+						translationScore = possible_translation[1] * probs_unigrams_en[possible_translation[0]]
+						if translationScore < translationScoreMax:
+							translationScoreMax = translationScore
+							bestTranslation = possible_translation[0]
+					except KeyError:
+						continue
+				if translationScoreMax == float('inf'):
+					bestTranslation = table_fr_en[word][0]
+				translationList.append(bestTranslation)
+	return translationList
+
+def changeToIdTable(table, codeToMot_fr, codeToMot_en):
+	"""modify a word to word translation table to code to code translation table
+	"""
+	table_translated = {}
+	for word in table:
+		id_word_fr = getKeyByValue(codeToMot_fr, word.strip())
+		for possible_translation in table[word]:
+			id_word_en = getKeyByValue(codeToMot_en, possible_translation[0].strip())
+			prob_trad = float(possible_translation[1])
+			if id_word_fr in table_translated:
+				table_translated[id_word_fr].append((id_word_en, prob_trad))
+			else:
+				table_translated[id_word_fr] = [(id_word_en, prob_trad)]
+	return table_translated
+
+def display_translating_table(table):
+	"""display the translation table
+	"""
+	for word in table:
+		for possible_translation in table[word]:
+			print(str(word) + " -> " + str(possible_translation[0]) + " with probability: " + str(possible_translation[1]))
+
+def getKeyByValue(dictio, searched):
+	"""
+	return the key of a given value in a dict
+	"""
+	for key, value in dictio.items():
+		if value == searched:
+			return key
+	return -1
+
+if __name__ == "__main__":
+
+	help = """traductor.py - Auteur: Luc Giffon
+
+  Programme qui prend en entrée une table de traduction français-anglais et une phrase en français (tokenizé+code) puis qui représente la phrase sous la forme d'un treillis où à chaque mot français w_f correspond les mots anglais w_e possibles dans la table de traduction, avec leur probabilité P(w_f|w_e).
+  Dans cette version la traduction est la séquence de mots de probabilité maximale utilisant uniquement les probabilités P(w_f|w_e)
+
+Utilisation:
+
+  python3 traductor.py <texte tokenizé path> | --sequence=<sequence>  <table de traduction> <table d'encodage des mots français> <table d'encodage des mots anglais> <unigrammes>[-option]
+
+  Attention: sys.argv est utilisé pour parser les arguments. Les arguments doivent être dans le bon ordre. De plus, les options prenant un argument doivent être utilisées avec le symbole "=" et sans espace.
+  La séquence doit être formatée comme [1,2,3] et non pas [1, 2, 3].
+
+Options:
+  -h                    Affiche ce message d'aide
+  -dtrm                 Affiche la table de traduction
+  -dtrc                 Affiche la table de traduction
+
+  --dumperp=<path>      Ecris la perplexité de la séquence
+  --dcode=<path>        Affiche le code de la séquence avec ses mots suivant une table du code
+"""
+
+	possible_flags = ["-h", "-dtrm", "-dtrc"]
+	possible_options = []
+
+	if ("-h" in sys.argv or len(sys.argv) < 6):
+		exit(help)
+
+	sequencePath = None
+	sequence = None
+	if len(sys.argv[1].split('=')) == 1:
+		sequencePath = sys.argv[1]
+	else:
+		try:
+			sequence = eval(sys.argv[1].split('=')[1])
+		except SyntaxError:
+			exit("Format de séquence invalide: " + sys.argv[1].split('=')[1])
+
+	translation_table_path = sys.argv[2]
+	codeToMot_fr_path = sys.argv[3]
+	codeToMot_en_path = sys.argv[4]
+	unigrams_en_path = sys.argv[5]
+
+	flags = {}
+	if (len(sys.argv) > 6):
+		for flag in sys.argv[6:]:
+			flag = flag.split('=')
+			if flag[0] in possible_flags:
+				flags[flag[0]] = True
+			elif flag[0] in possible_options:
+				try:
+					flags[flag[0]] = flag[1]
+				except:
+					flags[flag[0]] = ""
+			else:
+				exit("\n\t/_\\ /_\\ /_\\ ERREUR: " + flag[0] + " est inconnu! /_\\ /_\\ /_\\\n\n" + help )
+
+	print("Récupération de la table de traduction:", end = " ")
+	table_fr_en = getTableFromFile(translation_table_path)
+	if ("-dtrm" in flags):
+		display_translating_table(table_fr_en)
+	print("Table de traduction récupérée")
+
+	print("Encodage de la table de traduction:", end = " ")
+	codeToMot_fr = []
+	try:
+		f = open(codeToMot_fr_path, 'r')
+		codeToMot_fr = eval(f.read())
+		f.close()
+	except SyntaxError:
+		exit("Le fichier " + codeToMot_fr_path + " est invalide!")
+	except FileNotFoundError:
+		exit("Le fichier " + codeToMot_fr_path + " est introuvable!")
+
+	codeToMot_en = []
+	try:
+		f = open(codeToMot_en_path, 'r')
+		codeToMot_en = eval(f.read())
+		f.close()
+	except SyntaxError:
+		exit("Le fichier " + codeToMot_en_path + " est invalide!")
+	except FileNotFoundError:
+		exit("Le fichier " + codeToMot_en_path + " est introuvable!")
+
+	table_idfr_iden = changeToIdTable(table_fr_en, codeToMot_fr, codeToMot_en)
+	if ("-dtrc" in flags):
+		display_translating_table(table_idfr_iden)
+	print("Encodage de la table de traduction terminé")
+
+
+	probs_unigram_en = {}
+	try:
+		f = open(unigrams_en_path, 'r')
+		probs_unigram_en = eval(f.read())
+		f.close()
+	except SyntaxError:
+		exit("Le fichier " + unigrams_en_path + " est invalide!")
+	except FileNotFoundError:
+		exit("Le fichier " + unigrams_en_path + " est introuvable!")
+
+	best_translations = translate(sequence, table_idfr_iden, probs_unigram_en)
+	print(best_translations)
+	# for translation in best_translations:
+	# 	print(codeToMot_en[translation])
+	#~ translate(words_from_text_fr, table_fr_en, probs_unigram_en, tree_fr)
+
+
+	if False:
+
+	# --- traduction --- #
+
+		best_translations = translate(words_from_text_fr, table_idfr_iden, probs_unigram_en)
+		print(best_translations)
+		for translation in best_translations:
+			print(codeToMot_en[translation])
+		#~ translate(words_from_text_fr, table_fr_en, probs_unigram_en, tree_fr)
+
+
