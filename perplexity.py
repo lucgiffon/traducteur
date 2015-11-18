@@ -3,23 +3,26 @@
 import math
 import sys
 
-def perplexity(sequence, probs):
+def calc_smooth_perplexity(sequence, probs_unigrams, probs_digrams):
+	"""Calcule la perplexité du modèle
+
+	:param sequence:
+	:param probs_unigrams:
+	:param probs_digrams:
+	:return:
+	"""
 	sum_probs = 0
 	length_sequence = len(sequence)
 	i = 1
 	while i < length_sequence:
-		sum_probs += probs[(sequence[i], sequence[i-1])]
+		if (sequence[i], sequence[i-1]) in probs_digrams:
+			sum_probs += probs_digrams[(sequence[i], sequence[i-1])]
+		elif sequence[i] in probs_unigrams:
+			sum_probs += probs_unigrams[sequence[i]] + 5
+		else:
+			sum_probs += 20
 		i += 1
-	return (sum_probs / (length_sequence + 1))
-
-def smooth_prob_digrams(d_probs_digrams, d_probs_unigrams):
-	coefficient = [0.9, 0.09, 0.01]
-	smooth_probs_digrams = {}
-	for digram in d_probs_digrams:
-		smooth_probs_digrams[digram] = (coefficient[0] * d_probs_digrams[digram] +
-										coefficient[1] * d_probs_unigrams[digram[0]] +
-										coefficient[2])
-	return smooth_probs_digrams
+	return (sum_probs / (length_sequence))
 
 def display_probs(probs):
 	"""
@@ -51,12 +54,13 @@ Utilisation:
 
 Options:
   -h                    Affiche ce message d'aide
-  -dperp                Affiche les probabilités des unigrammes
+  -u                    Calcule la perplexité pour le modèle unigramme
+  -d                    Calcule la perplexité pour le modèle digramme
 
   --dumperp=<path>      Ecris la perplexité de la séquence
-  --dcode=<path>        Ecris le code de la séquence avec ses mots suivant une table du code
+  --dcode=<path>        Affiche le code de la séquence avec ses mots suivant une table du code
 """
-	possible_flags = ["-h", "-dperp"]
+	possible_flags = ["-h", "-u", "-d"]
 	possible_options = ["--dumperp", "--dcode"]
 
 	if ("-h" in sys.argv or len(sys.argv) < 3):
@@ -113,61 +117,41 @@ Options:
 	print("Séquence chargée")
 
 	probs_digrams = {}
-	print("Chargement des probabilités des digrammes")
-	try:
-		f = open(probs_digrams_path)
+	if ("-d" in flags or "-u" not in flags):
+		print("Chargement des probabilités des digrammes")
 		try:
-			probs_digrams = eval(f.read())
-		except SyntaxError:
-			exit("Le fichier " + probs_digrams_path + " est invalide et ne peut pas être utilisé comme modèle.")
-		f.close()
-	except FileNotFoundError:
-		exit("Le fichier " + probs_digrams_Path + " n'existe pas!")
-	print("Probabilités des digrammes chargées")
+			f = open(probs_digrams_path)
+			try:
+				probs_digrams = eval(f.read())
+			except SyntaxError:
+				exit("Le fichier " + probs_digrams_path + " est invalide et ne peut pas être utilisé comme modèle.")
+			f.close()
+		except FileNotFoundError:
+			exit("Le fichier " + probs_digrams_path + " n'existe pas!")
+		print("Probabilités des digrammes chargées")
 
 	probs_unigrams = {}
-	print("Chargement des probabilités des unigrammes")
-	try:
-		f = open(probs_unigrams_path)
+	if ("-u" in flags or "-d" not in flags):
+		print("Chargement des probabilités des unigrammes")
 		try:
-			probs_unigrams = eval(f.read())
-		except SyntaxError:
-			exit("Le fichier " + probs_unigrams_path + " est invalide et ne peut pas être utilisé comme modèle.")
+			f = open(probs_unigrams_path)
+			try:
+				probs_unigrams = eval(f.read())
+			except SyntaxError:
+				exit("Le fichier " + probs_unigrams_path + " est invalide et ne peut pas être utilisé comme modèle.")
+			f.close()
+		except FileNotFoundError:
+			exit("Le fichier " + probs_unigrams_path + " n'existe pas!")
+		print("Probabilités des unigrammes chargées")
+
+
+	print("Calcul de la perplexité de la séquence:", end = " ")
+	perplexite = calc_smooth_perplexity(sequence, probs_unigrams, probs_digrams)
+	print("Perplexité = " + str(perplexite))
+
+	if ("--dumperp" in flags):
+		if (flags["--dumperp"] == ""):
+			flags["--dumperp"] = "perplexity"
+		f = open(flags["--dumperp"], 'w')
+		f.write(str(perplexite))
 		f.close()
-	except FileNotFoundError:
-		exit("Le fichier " + probs_unigrams_path + " n'existe pas!")
-	print("Probabilités des unigrammes chargées")
-
-
-
-
-	if False:
-	# --- probabilité d'une séquence --- #
-
-		#~ print("Probabilité d'une séquence:")
-		sequence_fr = "Marie-Antoinette"
-		#~ words_from_sequence_fr = analyse_corpus(sequence_fr, tree_fr)
-		#~ print("Sequence française: " + str(words_from_sequence_fr))
-
-		#~ perplexite_fr = perplexity(words_from_sequence_fr, probs_digrams_fr)
-		#~ print("Perplexité de la séquence française: " + str(perplexite_fr))
-
-		#~ smooth_prob_digrams_fr = smooth_prob_digrams(probs_digrams_fr, probs_unigram_fr)
-		#~ smooth_perplexite_fr = perplexity(words_from_sequence_fr, smooth_prob_digrams)
-		#~ print("Smooth_perplexité de la séquence française: " + str(smooth_perplexite_fr))
-		#~ print("")
-
-
-		sequence_en = "Marie-Antoinette"
-		#~ words_nom_sequence_en = analyse_corpus(sequence_en, tree_en)
-		#~ print("Sequence Anglaise: " + str(words_enom_sequence_en))
-
-		#~ perplexite_en = perplexity(words_nom_sequence_en, probs_digrams_en)
-		#~ print("Perplexité de la séquence anglaise: " + str(perplexite_en))
-
-		#~ smooth_prob_digrams_en = smooth_prob_digrams(probs_digrams_en, probs_unigram_en)
-		#~ smooth_perplexite_en = perplexity(words_nom_sequence_en, smooth_prob_digrams)
-		#~ print("Smooth_perplexité de la séquence anglaise: " + str(smooth_perplexite_en))
-		#~ print("")
-
-		#~ print("")
