@@ -167,10 +167,11 @@ if __name__ == "__main__":
 	help = """tokenizer.py - Auteur: Luc Giffon
 
 Utilisation:
-  python3 tokenize.py <lexique path> <corpus path> [-flag]
+  Programme qui prend en entrée un texte et un lexique avec code et qui retourne le texte tokenizé selon le lexique, avec les mots remplacés par des codes.
 
-  Attention: sys.argv est utilisé pour parser les arguments. Les arguments doivent être dans le bon ordre. De plus,
-  les options prennant un argument doivent être utilisées avec le symbole "=" et sans espace.
+  python3 tokenize.py <lexique path> | --loadtree=<path> <corpus path> [-flag]
+
+  Attention: sys.argv est utilisé pour parser les arguments. Les arguments doivent être dans le bon ordre. De plus, les options prenant un argument doivent être utilisées avec le symbole "=" et sans espace.
 
 Options:
   -h                    Affiche ce message d'aide
@@ -187,7 +188,14 @@ Options:
 	if ("-h" in sys.argv or len(sys.argv) < 3):
 		exit(help)
 
-	lexiquePath = sys.argv[1]
+	lexiquePath = None
+	treePath = None
+	if len(sys.argv[1].split('=')) == 1:
+		lexiquePath = sys.argv[1]
+	else:
+		treePath = sys.argv[1].split('=')[1]
+
+
 	corpusPath = sys.argv[2]
 	flags = {}
 	if (len(sys.argv) > 3):
@@ -196,24 +204,44 @@ Options:
 			if flag[0] in possible_flags:
 				flags[flag[0]] = True
 			elif flag[0] in possible_options:
-				flags[flag[0]] = flag[1]
+				try:
+					flags[flag[0]] = flag[1]
+				except IndexError:
+					flags[flag[0]] = ""
 
 			else:
 				exit("\n\t/_\\ /_\\ /_\\ ERREUR: " + flag[0] + " est inconnu! /_\\ /_\\ /_\\\n\n" + help )
 
+	if lexiquePath is not None:
+		print("Construction de l'arbre lexicographique:", end = " ")
+		words_from_lexique = open_lexique(lexiquePath)
 
-	print("Construction de l'arbre lexicographique:", end = " ")
-	words_from_lexique = open_lexique(lexiquePath)
+		id_word = 1
+		tree = {}
+		codeToMot = {}
+		make_tree(tree, words_from_lexique, codeToMot)
+		if ("-dtree" in flags):
+			print("")
+			display_tree(tree)
+		print("Arbre lexicographique construit")
+	else:
+		print("Récupération de l'arbre lexicographique:", end = " ")
+		try:
+			f = open(treePath, 'r')
+			tree = eval(f.read())
+			f.close()
+			print("Arbre lexicographique récupéré")
+		except FileNotFoundError:
+			exit("Le fichier " + treePath + " n'existe pas!")
 
-	id_word = 1
-	tree = {}
-	codeToMot = {}
-	make_tree(tree, words_from_lexique, codeToMot)
-	if ("-dtree" in flags):
-		print("")
-		display_tree(tree)
-	print("Arbre lexicographique construit")
-
+		print("Récupération du code lexical:", end = " ")
+		try:
+			f = open(treePath + "_code", 'r')
+			codeToMot = eval(f.read())
+			f.close()
+			print("Code lexical récupéré")
+		except FileNotFoundError:
+			exit("Le fichier " + treePath + "_code" + " n'existe pas!")
 
 
 	print("Lecture du corpus:", end = " ")
@@ -227,11 +255,18 @@ Options:
 	print("Lecture du corpus terminée")
 
 	if ("--dumptree" in flags):
+		if (flags["--dumptree"] == ""):
+			flags["--dumptree"] = "tree"
 		f = open(flags["--dumptree"], 'w')
 		f.write(str(tree))
 		f.close()
+		f = open(flags["--dumptree"] + "_code", 'w')
+		f.write(str(codeToMot))
+		f.close()
 
 	if ("--dumpcorpus" in flags):
+		if (flags["--dumpcorpus"] == ""):
+			flags["--dumpcorpus"] = "tokenized"
 		f = open(flags["--dumpcorpus"], 'w')
 		f.write(str(words_from_corpus))
 		f.close()
