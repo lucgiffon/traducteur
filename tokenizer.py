@@ -48,22 +48,28 @@ def open_lexique(path):
 	"""
 	Ouvre le lexique et stocke tous les mots possibles dans une liste
 	"""
-	words_from_lexique = []
-	f = open(path, 'r')
-	line = f.readline()
-	while line != "":
-		words_from_lexique.append(line.strip().split()[0].strip())
+	try:
+		words_from_lexique = []
+		f = open(path, 'r')
 		line = f.readline()
-	return words_from_lexique
+		while line != "":
+			words_from_lexique.append(line.strip().split()[0].strip())
+			line = f.readline()
+		return words_from_lexique
+	except:
+		exit("Le fichier " + path + " n'existe pas!")
 
 
 def open_corpus(path):
 	"""
 	Ouvre le corpus, le stocke dans une string et retourne la string.
 	"""
-	f = open(path, 'r')
-	stream = f.read()
-	return stream
+	try:
+		f = open(path, 'r')
+		stream = f.read()
+		return stream
+	except:
+		exit("Le fichier " + path + " n'existe pas!")
 
 def analyse_corpus(corpus, tree):
 	"""
@@ -172,8 +178,8 @@ Options:
 	if ("-h" in sys.argv or len(sys.argv) < 3):
 		exit(help)
 
-	lexique = sys.argv[1]
-	corpus = sys.argv[2]
+	lexiquePath = sys.argv[1]
+	corpusPath = sys.argv[2]
 	flags = {}
 	if (len(sys.argv) > 3):
 		for flag in sys.argv[3:]:
@@ -188,9 +194,7 @@ Options:
 
 
 	print("Construction de l'arbre lexicographique:", end = " ")
-	words_from_lexique = open_lexique(lexique)
-	#~ words_from_lexique = ["pomme_de_terre", "de", "terre", "po", "pomme", "Marie", "Antoine", "Marie-Antoinette", "mange", "des", "quatre", "vingt", "quatorze", "quatre-vingts", "quatre-vingts_quatorze", "pommes_de_terre"]
-	# print(words_from_lexique)
+	words_from_lexique = open_lexique(lexiquePath)
 
 	id_word = 1
 	tree = {}
@@ -204,9 +208,7 @@ Options:
 
 
 	print("Lecture du corpus:", end = " ")
-	corpus = open_corpus(corpus)
-	# corpus = "Marie-Antoinette mange quatre-vingts pommes de terre à la fraise."
-	# corpus_fr = "j'arrive dans deux heures"
+	corpus = open_corpus(corpusPath)
 	words_from_corpus = ["START"] + analyse_corpus(corpus, tree) + ["STOP"]
 
 
