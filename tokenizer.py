@@ -78,7 +78,7 @@ def analyse_corpus(corpus, tree, flags):
     Récupère les mots du corpus.
     """
     words_from_corpus = []
-    separators = [',', ';', '.', '?', '!', ':', "EOF", " ", "BOF", "\n", "\t", "'"]
+    separators = [',', ';', '.', '?', '!', ':', "EOF", " ", "BOF", "\n", "\t"]
     last_word = 0
     index_last_word = 0
     index_last_word_saved = 0
@@ -140,7 +140,6 @@ def analyse_corpus(corpus, tree, flags):
                         if last_word != 0:
                             words_from_corpus.append(last_word)
                             index_last_word_saved = index_last_word
-                            print(index_last_word_saved)
                         elif "-i" in flags:
                             pass
                         else:
@@ -172,7 +171,7 @@ def displayWordsOfCorpus(words_from_corpus, codeToMot, unknown):
             print(str(word) + " -> " + codeToMot[word])
         except:
             if type(word) == str:
-                print(word)
+                print("ok ->" + word)
             else:
                 print(str(word) + " -> " + unknown[word])
             continue

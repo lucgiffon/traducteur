@@ -15,3 +15,11 @@ all_words_fr_code
 test
 test2
 unknowns
+
+corpus_en
+corpus_fr
+di_en
+di_fr
+test_tokenized
+uni_en
+uni_fr

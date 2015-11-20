@@ -62,6 +62,8 @@ def translate_digrams(words, table_fr_en, probs_digrams_en, probs_unigrams_en, c
 	iword = 1
 	while iword < len(words) - 1:
 		if words[iword] in table_fr_en:
+			# if iword > 2:
+			# 	exit()
 			if words[iword] > 0:
 				translationScoreMax = float('inf')
 				for possible_translation in table_fr_en[words[iword]]:
@@ -154,7 +156,7 @@ Utilisation:
   python3 traductor.py <texte tokenizé path> | --sequence=<sequence>  <table de traduction> <table d'encodage des mots français> <table d'encodage des mots anglais> <unigrammes> <digrammes>[-option]
 
   Attention: sys.argv est utilisé pour parser les arguments. Les arguments doivent être dans le bon ordre. De plus, les options prenant un argument doivent être utilisées avec le symbole "=" et sans espace.
-  La séquence doit être formatée comme [1,2,3] et non pas [1, 2, 3].
+  La séquence doit être formatée comme [1,2,3] et non pas [1, 2, 3]. (Sinon, utiliser des guillemets)
 
 Options:
   -h                    Affiche ce message d'aide
@@ -304,15 +306,11 @@ Options:
 			except FileNotFoundError:
 				exit("Le fichier " + flags["--loadunknownsen"] + " n'existe pas!")
 			print("Décodage de la séquence en anglais:")
-			displayWordsOfCorpus(sequence, codeToMot_en, unknowns_en)
+			displayWordsOfCorpus(best_translations, codeToMot_en, unknowns_en)
 			print("Décodage terminé")
 
 		else:
 			print("Décodage de la séquence en anglais:")
-			displayWordsOfCorpus(sequence, codeToMot_en)
+			displayWordsOfCorpus(best_translations, codeToMot_en)
 			print("Décodage terminé")
 
-	# print(best_translations)
-	# for translation in best_translations:
-	# 	print(codeToMot_en[translation])
-	#~ translate(words_from_text_fr, table_fr_en, probs_unigram_en, tree_fr)
