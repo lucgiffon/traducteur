@@ -6,3 +6,12 @@ digrams*
 unigrams*
 tokenized*
 perplexity*
+
+
+all_words_en
+all_words_en_code
+all_words_fr
+all_words_fr_code
+test
+test2
+unknowns

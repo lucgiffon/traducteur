@@ -98,7 +98,10 @@ Options:
 	words_from_corpus = []
 	try:
 		f = open(corpusPath, 'r')
-		words_from_corpus = eval(f.read())
+		try:
+			words_from_corpus = eval(f.read())
+		except SyntaxError:
+			print("Le fichier " + corpusPath + " est invalide!")
 		f.close()
 	except FileNotFoundError:
 		exit("Le fichier " + corpusPath + " n'existe pas!")
