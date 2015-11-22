@@ -59,48 +59,45 @@ def translate_digrams(words, table_fr_en, probs_digrams_en, probs_unigrams_en, c
 	:return:
 	"""
 	translationList = ['START']
+	unrecognized_words = {}
 	iword = 1
 	while iword < len(words) - 1:
-		if words[iword] in table_fr_en:
-			# if iword > 2:
-			# 	exit()
-			if words[iword] > 0:
-				translationScoreMax = float('inf')
+		if words[iword] in table_fr_en: # si le mot français est dans la table de traduction
+			translationScoreMax = float('inf')
+			for possible_translation in table_fr_en[words[iword]]: # pour toutes les traductions possibles de ce mot
+				try:
+					translationScore = possible_translation[1] * probs_digrams_en[(possible_translation[0], translationList[iword-1])]
+
+					if translationScore < translationScoreMax:
+						translationScoreMax = translationScore
+						bestTranslation = possible_translation[0]
+				except KeyError:
+						continue # le digramme est peut-être inconnu
+
+			if translationScoreMax == float('inf'):
 				for possible_translation in table_fr_en[words[iword]]:
 					try:
-						translationScore = possible_translation[1] * probs_digrams_en[(possible_translation[0], translationList[iword-1])]
+						translationScore = possible_translation[1] * probs_unigrams_en[possible_translation[0]]
 
 						if translationScore < translationScoreMax:
 							translationScoreMax = translationScore
 							bestTranslation = possible_translation[0]
 					except KeyError:
-							continue
+						continue # l'unigramme est peut-être inconnu
 
-				if translationScoreMax == float('inf'):
-					print('passage à l\"unigramme:  ' + str(words[iword]))
-					for possible_translation in table_fr_en[words[iword]]:
-						try:
-							translationScore = possible_translation[1] * probs_unigrams_en[possible_translation[0]]
-
-							if translationScore < translationScoreMax:
-								translationScoreMax = translationScore
-								bestTranslation = possible_translation[0]
-						except KeyError:
-							continue
-
-				if translationScoreMax == float('inf'):
-					print('ok2')
-					for possible_translation in table_fr_en[words[iword]]:
-						translationScore = possible_translation[1]
-						if translationScore < translationScoreMax:
-							translationScoreMax = translationScore
-							bestTranslation = possible_translation[0]
-				translationList.append(bestTranslation)
-			else:
-				translationList.append(words[iword])
+			if translationScoreMax == float('inf'):
+				for possible_translation in table_fr_en[words[iword]]:
+					translationScore = possible_translation[1]
+					if translationScore < translationScoreMax:
+						translationScoreMax = translationScore
+						bestTranslation = possible_translation[0]
+			translationList.append(bestTranslation)
+		else:
+			unrecognized_words[-iword] = words[iword]
+			translationList.append(-iword)
 		iword += 1
 	translationList.append('STOP')
-	return translationList
+	return (translationList, unrecognized_words)
 
 def changeToIdTable(table, codeToMot_fr, codeToMot_en):
 	"""modify a word to word translation table to code to code translation table
@@ -108,13 +105,15 @@ def changeToIdTable(table, codeToMot_fr, codeToMot_en):
 	table_translated = {}
 	for word in table:
 		id_word_fr = getKeyByValue(codeToMot_fr, word.strip())
-		for possible_translation in table[word]:
-			id_word_en = getKeyByValue(codeToMot_en, possible_translation[0].strip())
-			prob_trad = float(possible_translation[1])
-			if id_word_fr in table_translated:
-				table_translated[id_word_fr].append((id_word_en, prob_trad))
-			else:
-				table_translated[id_word_fr] = [(id_word_en, prob_trad)]
+		if id_word_fr > 0: # le mot français doit être connu
+			for possible_translation in table[word]:
+				id_word_en = getKeyByValue(codeToMot_en, possible_translation[0].strip()) # le mot anglais doit être connu
+				if id_word_en > 0:
+					prob_trad = float(possible_translation[1])
+					if id_word_fr in table_translated:
+						table_translated[id_word_fr].append((id_word_en, prob_trad)) # chaque mot français a une traduction anglaise avec une certaine probabilité
+					else:
+						table_translated[id_word_fr] = [(id_word_en, prob_trad)]
 	return table_translated
 
 def display_translating_table(table):
@@ -133,16 +132,23 @@ def getKeyByValue(dictio, searched):
 			return key
 	return -1
 
-def displayWordsOfCorpus(words_from_corpus, codeToMot, unknown={}):
+def displayWordsOfCorpus(words_from_corpus, codeToMot1, unknown={}, codeToMot2={}, unrecognized={}):
 	for word in words_from_corpus:
 		try:
-			print(str(word) + " -> " + codeToMot[word])
-		except:
-			if word in unknown:
-				print(str(word) + " -> " + unknown[word])
-			else:
+			if word == 'START' or word == 'STOP':
 				print(word)
+			elif word > 0: # si le mot a trouvé une traduction
+				print(str(word) + " -> " + codeToMot1[word])
+			elif (word in unknown and unrecognized == {}): # cas de mot inconnu du corpus
+				print(str(word) + " -> " + unknown[word])
+			elif (word in unrecognized and unrecognized[word] > 0): # si le mot existait en français mais pas en anglais
+				print(str(word) + " -> " + codeToMot2[unrecognized[word]])
+			elif (word in unrecognized and unrecognized[word] < 0): # si le mot n'existait pas non plus en français
+				print(str(word) + " -> " + unknown[unrecognized[word]])
+		except KeyError:
+			print("Erreur de récupération: " + str(word))
 			continue
+
 
 if __name__ == "__main__":
 
@@ -165,12 +171,11 @@ Options:
   -dcode                Affiche le code de la séquence avec ses mots suivant une table du code
 
   --loadunknownsfr=<path> Charge le fichier des mots inconnus français
-  --loadunknownsen=<path> Charge le fichier des mots inconnus anglais
 
 """
 
 	possible_flags = ["-h", "-dtrm", "-dtrc", "-dcode"]
-	possible_options = ["--loadunknownsfr", "--loadunknownsen"]
+	possible_options = ["--loadunknownsfr"]
 
 	if ("-h" in sys.argv or len(sys.argv) < 7):
 		exit(help)
@@ -274,6 +279,7 @@ Options:
 			exit("Le fichier " + sequencePath + " n'existe pas!")
 		print("Séquence à traduire récupérée.")
 
+	unknowns_fr = {}
 	if ("-dcode" in flags):
 		if ("--loadunknownsfr" in flags):
 			print("Récupération des mots français inconnus:", end = " ")
@@ -293,24 +299,9 @@ Options:
 			displayWordsOfCorpus(sequence, codeToMot_fr)
 			print("Décodage terminé")
 
-	best_translations = translate_digrams(sequence, table_idfr_iden, probs_digram_en, probs_unigram_en, codeToMot_en)
+	(best_translations, unrecognizeds) = translate_digrams(sequence, table_idfr_iden, probs_digram_en, probs_unigram_en, codeToMot_en)
 
 	if ("-dcode" in flags):
-		if ("--loadunknownsen" in flags):
-			print("Récupération des mots français inconnus:", end = " ")
-			try:
-				f = open(flags["--loadunknownsen"], 'r')
-				unknowns_en = eval(f.read())
-				f.close()
-				print("Mots français inconnus récupérés")
-			except FileNotFoundError:
-				exit("Le fichier " + flags["--loadunknownsen"] + " n'existe pas!")
-			print("Décodage de la séquence en anglais:")
-			displayWordsOfCorpus(best_translations, codeToMot_en, unknowns_en)
-			print("Décodage terminé")
-
-		else:
-			print("Décodage de la séquence en anglais:")
-			displayWordsOfCorpus(best_translations, codeToMot_en)
-			print("Décodage terminé")
-
+		print("Décodage de la séquence en anglais:")
+		displayWordsOfCorpus(best_translations, codeToMot_en, unknowns_fr, codeToMot_fr, unrecognizeds)
+		print("Décodage terminé")

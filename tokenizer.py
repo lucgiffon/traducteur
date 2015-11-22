@@ -294,7 +294,7 @@ Options:
         f.write(str(words_from_corpus))
         f.close()
 
-    if ("--dumpunknowns" in flags):
+    if ("--dumpunknowns" in flags and "-i" not in flags):
         if (flags["--dumpunknowns"] == ""):
             flags["--dumpunknowns"] = "unknowns"
         f = open(flags["--dumpunknowns"], 'w')
