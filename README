@@ -13,3 +13,72 @@ Options:
 
   --dumptree=<path>     Ecris l'arbre lexicographique
   --dumpcorpus=<path>   Ecris les codes des mots du corpus
+
+
+---------------------
+
+
+model.py - Auteur: Luc Giffon
+
+Utilisation:
+
+  Programme qui prend en entrée un texte tokenizé, traduit en code, et retourne un modèle de langage avec les probabilités (exprimées en -logprob) de chaque unigramme et chaque bigramme du texte d'entrée
+
+  python3 model.py <corpus tokenizé path> [-option]
+
+  Attention: sys.argv est utilisé pour parser les arguments. Les arguments doivent être dans le bon ordre. De plus, les options prenant un argument doivent être utilisées avec le symbole "=" et sans espace.
+
+Options:
+  -h                    Affiche ce message d'aide
+  -dprobsu              Affiche les probabilités des unigrammes
+  -dprobsd              Affiche les probabilités des digrammes
+
+  --dumpuni=<path>      Ecris les probabilités des unigrammes
+  --dumpdi=<path>       Ecris les probabilités des digrammes
+
+
+----------------------
+
+perplexity.py - Auteur: Luc Giffon
+
+  Programme qui prend en entrée un modèle de langage calculé avec le programme précédent et un texte (tokenizé + code) et retourne la valeur de perplexité du modèle sur ce texte.
+
+Utilisation:
+
+  python3 perplexity.py <texte tokenizé path> | --sequence=<sequence> <modèle digrammes> <modèle unigrammes> [-option]
+
+  Attention: sys.argv est utilisé pour parser les arguments. Les arguments doivent être dans le bon ordre. De plus, les options prenant un argument doivent être utilisées avec le symbole "=" et sans espace.
+  La séquence doit être formatée comme [1,2,3] et non pas [1, 2, 3].
+
+Options:
+  -h                    Affiche ce message d'aide
+  -u                    Calcule la perplexité pour le modèle unigramme
+  -d                    Calcule la perplexité pour le modèle digramme
+
+  --dumperp=<path>      Ecris la perplexité de la séquence
+  --dcode=<path>        Affiche le code de la séquence avec ses mots suivant une table du code
+
+
+---------------------
+
+
+traductor.py - Auteur: Luc Giffon
+
+  Programme qui prend en entrée une table de traduction français-anglais et une phrase en français (tokenizé+code) puis qui représente la phrase sous la forme d'un treillis où à chaque mot français w_f correspond les mots anglais w_e possibles dans la table de traduction, avec leur probabilité P(w_f|w_e).
+  Dans cette version la traduction est la séquence de mots de probabilité maximale utilisant uniquement les probabilités P(w_f|w_e)
+
+Utilisation:
+
+  python3 traductor.py <texte tokenizé path> | --sequence=<sequence>  <table de traduction> <table d'encodage des mots français> <table d'encodage des mots anglais> <unigrammes> <digrammes>[-option]
+
+  Attention: sys.argv est utilisé pour parser les arguments. Les arguments doivent être dans le bon ordre. De plus, les options prenant un argument doivent être utilisées avec le symbole "=" et sans espace.
+  La séquence doit être formatée comme [1,2,3] et non pas [1, 2, 3]. (Sinon, utiliser des guillemets)
+
+Options:
+  -h                    Affiche ce message d'aide
+  -dtrm                 Affiche la table de traduction
+  -dtrc                 Affiche la table de traduction
+  -dcode                Affiche le code de la séquence avec ses mots suivant une table du code
+
+  --loadunknownsfr=<path> Charge le fichier des mots inconnus français
+
